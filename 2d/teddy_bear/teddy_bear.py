@@ -6,6 +6,9 @@ import gpytoolbox as gpt
 import numpy as np
 from PIL import Image
 import igl
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, "../../../..")))
 
 import igl.triangle
 from simkit.average_onto_simplex import average_onto_simplex
@@ -36,7 +39,7 @@ for i in indices:
 V_final, E_final = combine_meshes(V_list, E_list)
 V_final, SVI, SVJ, _no = igl.remove_duplicate_vertices(V_final, E_final, 15.0)
 E_final = SVJ[E_final]
-[vertices, faces] = igl.triangle.triangulate(V_final, E_final, flags="qVa100")
+[vertices, faces, _, _, _] = igl.triangle.triangulate(V_final, E_final, flags="qVa100")
 bc = average_onto_simplex(vertices, faces)
 
 # w_horn = 1 - winding_number(bc, V_list[1], E_list[1])
@@ -55,7 +58,7 @@ bc = average_onto_simplex(vertices, faces)
 # w_front_leg_3 = winding_number(bc, V_list[11], E_list[11])
 
 
-igl.write_obj(dir +  "/" + name + ".obj", np.concatenate( [vertices, np.zeros((vertices.shape[0], 1))], axis=1), faces)
+igl.writeOBJ(dir +  "/" + name + ".obj", np.concatenate( [vertices, np.zeros((vertices.shape[0], 1))], axis=1), faces)
 uv=vertices / [image.width, image.height]
 np.save(dir + "/" + name + "_uv.npy", uv )
 # np.save(dir + "/" + name + "_w_horn.npy", w_horn )
@@ -91,5 +94,14 @@ vals = np.array(image)
 mesh.add_color_quantity("test_vals", vals[:, :, 0:3]/255,
                         defined_on='texture', param_name="test_param",
                             enabled=True)
+
+
+
+top_half = vertices[:, 1] > vertices[:, 1].mean()
+left_half = vertices[:, 0] < vertices[:, 0].mean() - 200
+
+top_left = top_half * left_half
+
+mesh.add_scalar_quantity("in", top_left)
 ps.show()
 

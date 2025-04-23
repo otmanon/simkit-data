@@ -9,6 +9,11 @@ from PIL import Image
 import igl
 
 import igl.triangle
+
+
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(__file__, "../../../..")))
 from simkit.average_onto_simplex import average_onto_simplex
 from simkit.boundary_loops import boundary_loops
 from simkit.closed_polyline import closed_polyline
@@ -98,11 +103,11 @@ E_final = SVJ[E_final]
 holes = np.array(centroids)
 #np.array([[1395.81, 850.64],
  #                 [825.99, 847.03]])
-[vertices, faces] = igl.triangle.triangulate(V_final, E_final, flags="qVa300", H=holes)
+[vertices, faces, _, _, _] = igl.triangle.triangulate(V_final, E_final, flags="qVa300", H=holes)
 [vertices, faces, _, _] = igl.remove_unreferenced(vertices, faces)
 
 
-igl.write_obj(dir +  "/" + name + ".obj", np.concatenate( [vertices, np.zeros((vertices.shape[0], 1))], axis=1), faces)
+igl.writeOBJ(dir +  "/" + name + ".obj", np.concatenate( [vertices, np.zeros((vertices.shape[0], 1))], axis=1), faces)
 uv=vertices / [image.width, image.height]
 np.save(dir + "/" + name + "_uv.npy", uv )
 
@@ -111,6 +116,9 @@ np.save(dir + "/" + name + "_uv.npy", uv )
 mesh = ps.register_surface_mesh("mesh", vertices, faces)
 
 Es = boundary_loops(faces, vertices.shape[0])
+
+
+
 E = np.vstack(Es[1:])
 
 
@@ -126,7 +134,6 @@ ym[inside_stiff > 0.1] = 1e9
 pr = np.ones((faces.shape[0], 1)) * 0.45
 # pr[inside_actuator > 0.1] = 0.0
 materials = np.concatenate([ym, pr], axis=1)
-
 
 
 # now let's build the actuator force distribution
